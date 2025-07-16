@@ -131,5 +131,6 @@ inspectTransaction('./my-transaction.bin');
 
 -   **Name**: `ltm`
 -   **Version**: `1.0.0`
+-   **Category**: Transaction
 -   **Description**: Node.js module for programmatically building and decoding Lea Chain Transaction Manifests.
 -   **Repository**: `https://github.com/LEA-Blockchain/ltm.git`
