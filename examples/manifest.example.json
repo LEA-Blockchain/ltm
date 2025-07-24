@@ -1,0 +1,41 @@
+{
+  "comment": "This transaction registers a new user and transfers an initial credit.",
+  "sequence": 2,
+  "feePayer": "registrar",
+  "gasLimit": 500000,
+  "gasPrice": 10,
+  "constants": {
+    "contract": "1111111111111111111111111111111111111111111111111111111111111111",
+    "registrationId": 1,
+    "transferId": 2,
+    "recipient": "lea1jp3mhzv3gn2cd4pdnchh2835m4vrvamkcp26s043mk2g0eh3j9xsz3gafl"
+  },
+  "invocations": [
+    {
+      "targetAddress": "$addr($const(contract))",
+      "instructions": [
+        {
+          "uleb": "$const(registrationId)"
+        },
+        { "uint64": "9876543210" },
+        { "uleb": "$addr(lea19sk08nl545jzjvmx3qzryahz94mlcaxmqhrrnl3slw83ys53p08qj3zkcw)" },
+        { "uleb": "$addr(registrar)" }
+      ]
+    },
+    {
+      "targetAddress": "$addr($const(contract))",
+      "instructions": [
+        {
+          "uleb": "$const(transferId)"
+        },
+        {
+          "uint8": "$addr(recipient)"
+        },
+        { "uint64": "1000" },
+        { 
+          "uint8" : "$addr(lea1y54smzd2dvvgujg9h209kss7us898024elna8rutjxraaxc3cz8qcvujl2)"
+        }
+      ]
+    }
+  ]
+}
