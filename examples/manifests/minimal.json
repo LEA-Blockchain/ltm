@@ -1,0 +1,19 @@
+{
+  "comment": "A minimal transaction with a single signer and a single invocation.",
+  "sequence": 1,
+  "feePayer": "registrar",
+  "gasLimit": 100000,
+  "gasPrice": 5,
+  "constants": {
+    "mainContract": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"
+  },
+  "invocations": [
+    {
+      "targetAddress": "$addr($const(mainContract))",
+      "instructions": [
+        { "uleb": 101 },
+        { "uleb": 42 }
+      ]
+    }
+  ]
+}

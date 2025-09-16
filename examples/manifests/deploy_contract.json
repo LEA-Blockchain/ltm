@@ -1,0 +1,19 @@
+{
+  "comment": "A transaction to deploy a new smart contract.",
+  "sequence": 1,
+  "feePayer": "deployer",
+  "gasLimit": 1000000,
+  "gasPrice": 10,
+  "constants": {
+    "contractRegistry": "0000000000000000000000000000000000000000000000000000000000000003"
+  },
+  "invocations": [
+    {
+      "targetAddress": "$addr($const(contractRegistry))",
+      "instructions": [
+        { "uleb": 0 },
+        { "vector": "$contract_code" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "comment": "A transaction with multiple invocations targeting different contracts.",
+  "sequence": 15,
+  "feePayer": "deployer",
+  "gasLimit": 750000,
+  "gasPrice": 8,
+  "constants": {
+    "tokenContract": "0000000000000000000000000000000000000000000000000000000000000001",
+    "daoContract": "0000000000000000000000000000000000000000000000000000000000000002",
+    "recipient": "lea1jp3mhzv3gn2cd4pdnchh2835m4vrvamkcp26s043mk2g0eh3j9xsz3gafl"
+  },
+  "invocations": [
+    {
+      "targetAddress": "$addr($const(tokenContract))",
+      "instructions": [
+        { "uleb": 1 },
+        { "uleb": "$addr(recipient)" },
+        { "uleb": "500000000" }
+      ]
+    },
+    {
+      "targetAddress": "$addr($const(daoContract))",
+      "instructions": [
+        { "uleb": 2 },
+        { "vector": "4a6f696e2050726f706f73616c" }
+      ]
+    },
+    {
+      "targetAddress": "$addr($const(tokenContract))",
+      "instructions": [
+        { "uleb": 2 },
+        { "uleb": "100000000" }
+      ]
+    }
+  ]
+}

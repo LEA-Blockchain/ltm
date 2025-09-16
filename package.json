@@ -1,0 +1,45 @@
+{
+  "name": "@getlea/ltm",
+  "version": "1.0.0",
+  "description": "A library for resolving and encoding LEA Transaction Manifests.",
+  "license": "ISC",
+  "author": "Allwin Ketnawang",
+  "type": "module",
+  "bin": {
+    "lea-ltm": "./dist/cli.mjs"
+  },
+  "main": "./dist/ltm.node.cjs",
+  "module": "./dist/ltm.node.mjs",
+  "browser": "./dist/ltm.web.mjs",
+  "exports": {
+    ".": {
+      "node": {
+        "import": "./dist/ltm.node.mjs",
+        "require": "./dist/ltm.node.cjs"
+      },
+      "browser": {
+        "import": "./dist/ltm.web.mjs"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "docs",
+    "LTM_FORMAT.md",
+    "README.md"
+  ],
+  "scripts": {
+    "prepare": "lea-rl \"https://github.com/LEA-Blockchain/ed25519/releases/download/v1.0.0/ed25519.wasm-v1.0.0.tar.gz\" ./src/wasm/ && lea-rl \"https://github.com/LEA-Blockchain/falcon512/releases/download/v1.0.0/falcon512.wasm-v1.0.0.tar.gz\" ./src/wasm/",
+    "build": "node scripts/build.mjs",
+    "start": "node examples/index.node.mjs",
+    "test": "npm run build && node scripts/test.mjs"
+  },
+  "dependencies": {
+    "@getlea/vm-shim": "^1.0.0",
+    "hash-wasm": "^4.12.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.6",
+    "lea-rl": "^1.1.0"
+  }
+}

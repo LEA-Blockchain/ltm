@@ -1,0 +1,25 @@
+{
+  "comment": "A multi-signature transaction to authorize a treasury withdrawal.",
+  "sequence": 42,
+  "feePayer": "treasuryAdmin",
+  "gasLimit": 250000,
+  "gasPrice": 12,
+  "constants": {
+    "treasuryContract": "c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0",
+    "recipient": "lea1y54smzd2dvvgujg9h209kss7us898024elna8rutjxraaxc3cz8qcvujl2"
+  },
+  "signers": [
+    "treasuryAdmin",
+    "treasuryAuditor"
+  ],
+  "invocations": [
+    {
+      "targetAddress": "$addr($const(treasuryContract))",
+      "instructions": [
+        { "uleb": 3 },
+        { "uleb": "$addr(recipient)" },
+        { "uleb": "1000000000000" }
+      ]
+    }
+  ]
+}

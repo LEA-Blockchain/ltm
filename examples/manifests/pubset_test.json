@@ -1,0 +1,16 @@
+{
+  "comment": "Test for the $pubset directive and INLINE functionality.",
+  "sequence": 1,
+  "feePayer": "identityOwner",
+  "gasLimit": 200000,
+  "gasPrice": 10,
+  "invocations": [
+    {
+      "targetAddress": "$addr(1111111111111111111111111111111111111111111111111111111111111111)",
+      "instructions": [
+        { "uleb": 123 },
+        { "INLINE": "$pubset(identityOwner)" }
+      ]
+    }
+  ]
+}
