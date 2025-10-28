@@ -204,3 +204,40 @@ export class PkmiCryptoHandler {
     }
 }
 
+async function createInitializedHandler() {
+    const handler = new PkmiCryptoHandler();
+    await handler.init();
+    return handler;
+}
+
+/**
+ * Verifies an Ed25519 signature.
+ * @param {Uint8Array} message - Raw message bytes.
+ * @param {Uint8Array} signature - 64-byte Ed25519 signature.
+ * @param {Uint8Array} publicKey - 32-byte Ed25519 public key.
+ * @returns {Promise<boolean>} True when signature is valid.
+ */
+export async function verifyEd25519(message, signature, publicKey) {
+    if (!(message instanceof Uint8Array)) throw new TypeError('message must be a Uint8Array');
+    if (!(signature instanceof Uint8Array)) throw new TypeError('signature must be a Uint8Array');
+    if (!(publicKey instanceof Uint8Array)) throw new TypeError('publicKey must be a Uint8Array');
+
+    const handler = await createInitializedHandler();
+    return handler.verifyWith(handler.ed25519, publicKey, signature, message);
+}
+
+/**
+ * Verifies a Falcon-512 signature.
+ * @param {Uint8Array} message - Raw message bytes.
+ * @param {Uint8Array} signature - Falcon-512 signature blob.
+ * @param {Uint8Array} publicKey - Falcon-512 public key.
+ * @returns {Promise<boolean>} True when signature is valid.
+ */
+export async function verifyFalcon512(message, signature, publicKey) {
+    if (!(message instanceof Uint8Array)) throw new TypeError('message must be a Uint8Array');
+    if (!(signature instanceof Uint8Array)) throw new TypeError('signature must be a Uint8Array');
+    if (!(publicKey instanceof Uint8Array)) throw new TypeError('publicKey must be a Uint8Array');
+
+    const handler = await createInitializedHandler();
+    return handler.verifyWith(handler.falcon512, publicKey, signature, message);
+}

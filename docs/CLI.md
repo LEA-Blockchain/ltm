@@ -76,6 +76,12 @@ lea-ltm package <manifest-path> [options]
 | `--<signerName> <path>`               | Provide the key file for a required signer (e.g., `--deployer ./d.json`).                                  |
 | `--file <variable> <path>`            | Load a file as binary data and assign it to a `$variable` placeholder in the manifest.                     |
 | `--outfile <path>`                    | Specify the output file path for the binary transaction. Defaults to the manifest name with a `.tx.bin` extension. |
+| `--no-chain`                         | Disable the automatic lookup of the previous transaction hash (see note below).                             |
+
+> **Chaining note**  
+> By default the CLI attempts to call `lea get-last-tx-hash --address <bech32>` before packaging.  
+> If the command succeeds a `lastTxHash.json` file is created in the current working directory.  
+> Use `--no-chain` to skip this lookup when the `lea` tool is unavailable or you prefer to avoid generating the file.
 
 #### Examples
 
@@ -154,16 +160,25 @@ lea-ltm verify ./deploy.bin ./manifests/deploy.json
 
 Decodes a binary transaction into the canonical manifest-style JSON that the signer sees, optionally stripping the Lea VM header emitted by some runtimes.
 
+The decoder keeps every SCTP vector as a raw `Uint8Array`. For convenience each byte slice exposes lazy getters:
+
+- `.hex` – canonical lowercase hex.
+- `.bech32m` – available when the field is an address and the HRP is known.
+- `.info` – metadata about the field (e.g., `{ kind: 'pubset', signer: 'publisher' }`).
+
+This means you can round-trip `encode → decode → encode` without losing any bytes while still getting human-friendly views when you need them.
+
 #### Usage
 
 ```sh
-lea-ltm decode <transaction-path> [--outfile <path>] [--strip-vm-header]
+lea-ltm decode <transaction-path> [--manifest <path>] [--outfile <path>] [--strip-vm-header]
 ```
 
 #### Options
 
 | Option                  | Description                                                                 |
 | ----------------------- | --------------------------------------------------------------------------- |
+| `--manifest <path>`     | Supply the authoring manifest so the decoder can recover instruction labels (e.g., `INLINE`, `$pubset(...)`). |
 | `--outfile <path>`      | Write the decoded JSON to a file instead of stdout.                         |
 | `--strip-vm-header`     | Remove the Lea VM header (`LEAB` magic + length) before decoding.           |
 
@@ -175,10 +190,33 @@ lea-ltm decode <transaction-path> [--outfile <path>] [--strip-vm-header]
 lea-ltm decode ./transaction.bin
 ```
 
-**2. Decode a VM-wrapped file and save the JSON**
+**2. Decode a VM-wrapped file with manifest hints and save the JSON**
 
 ```sh
-lea-ltm decode ./vm-output.tx --strip-vm-header --outfile ./decoded.json
+lea-ltm decode ./vm-output.tx \
+  --strip-vm-header \
+  --manifest ./manifests/deploy.json \
+  --outfile ./decoded.json
+```
+
+In the JSON output, byte fields are represented as objects:
+
+```json
+{
+  "addresses": [
+    { "hex": "d2bf72...", "bech32m": "lea1..." },
+    { "hex": "a1b2c3..." }
+  ],
+  "invocations": [
+    {
+      "targetAddress": 0,
+      "instructions": [
+        { "uleb": 123 },
+        { "INLINE": { "hex": "00ff...", "info": { "kind": "pubset", "signer": "publisher" } } }
+      ]
+    }
+  ]
+}
 ```
 
 ---

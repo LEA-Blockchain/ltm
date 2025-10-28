@@ -21,10 +21,12 @@ function printHelp() {
     
     verify <transaction-path> [manifest-path] Verify and decode a binary transaction file.
                                               Optionally cross-reference with a manifest.
-    decode <transaction-path> [--outfile <path>] Decode a transaction into a canonical
-                                                 manifest-style JSON representation.
-                                                 Use --strip-vm-header if the file
-                                                 includes the Lea VM wrapper.
+    decode <transaction-path> [--manifest <path>] [--outfile <path>]
+                                             Decode a transaction into a canonical
+                                             manifest-style JSON representation.
+                                             Use --manifest to guide inline decoding
+                                             and --strip-vm-header if the file
+                                             includes the Lea VM wrapper.
 
     decode-result <result-path> <manifest-path> Decodes a binary execution result using a
                                                 schema from the manifest.
@@ -334,15 +336,55 @@ async function decodeResult(args) {
     }
 }
 
+function serializeDecodedValue(value) {
+    if (value instanceof Uint8Array) {
+        const serialized = { hex: value.hex };
+        const bech32m = value.bech32m;
+        if (bech32m) {
+            serialized.bech32m = bech32m;
+        }
+        const info = value.info;
+        if (info && typeof info === 'object' && Object.keys(info).length > 0) {
+            serialized.info = serializeDecodedValue(info);
+        }
+        return serialized;
+    }
+    if (value === null || value === undefined) {
+        return value;
+    }
+    if (typeof value === 'bigint') {
+        return value.toString();
+    }
+    if (Array.isArray(value)) {
+        return value.map(item => serializeDecodedValue(item));
+    }
+    if (value instanceof Map) {
+        const obj = {};
+        for (const [key, val] of value.entries()) {
+            obj[key] = serializeDecodedValue(val);
+        }
+        return obj;
+    }
+    if (typeof value === 'object') {
+        const obj = {};
+        for (const [key, val] of Object.entries(value)) {
+            obj[key] = serializeDecodedValue(val);
+        }
+        return obj;
+    }
+    return value;
+}
+
 async function decodeTransactionCommand(args) {
     if (args.length === 0) {
         console.error('[ERROR] Missing transaction path for decode command.');
-        console.error('Usage: lea-ltm decode <transaction-path> [--outfile <path>] [--strip-vm-header]');
+        console.error('Usage: lea-ltm decode <transaction-path> [--manifest <path>] [--outfile <path>] [--strip-vm-header]');
         process.exit(1);
     }
 
     let outfile = null;
     let stripVmHeader = false;
+    let manifestPath = null;
     const positional = [];
     for (let i = 0; i < args.length; i++) {
         if (args[i] === '--outfile') {
@@ -351,6 +393,13 @@ async function decodeTransactionCommand(args) {
                 process.exit(1);
             }
             outfile = args[i + 1];
+            i++;
+        } else if (args[i] === '--manifest') {
+            if (i + 1 >= args.length) {
+                console.error('[ERROR] Missing value for --manifest.');
+                process.exit(1);
+            }
+            manifestPath = args[i + 1];
             i++;
         } else if (args[i] === '--strip-vm-header') {
             stripVmHeader = true;
@@ -361,7 +410,7 @@ async function decodeTransactionCommand(args) {
 
     if (positional.length === 0) {
         console.error('[ERROR] Missing transaction path for decode command.');
-        console.error('Usage: lea-ltm decode <transaction-path> [--outfile <path>] [--strip-vm-header]');
+        console.error('Usage: lea-ltm decode <transaction-path> [--manifest <path>] [--outfile <path>] [--strip-vm-header]');
         process.exit(1);
     }
 
@@ -372,8 +421,16 @@ async function decodeTransactionCommand(args) {
         const txBuffer = await readFile(txPath);
         const txBytes = Uint8Array.from(txBuffer);
 
-        const decoded = decodeTransaction(txBytes, { stripVmHeader });
-        const jsonOutput = JSON.stringify(decoded, null, 2);
+        let manifest = null;
+        if (manifestPath) {
+            console.log(`[INFO] Using manifest hints from: ${manifestPath}`);
+            const manifestSource = await readFile(manifestPath, 'utf-8');
+            manifest = JSON.parse(manifestSource);
+        }
+
+        const decoded = await decodeTransaction(txBytes, { stripVmHeader, manifest });
+        const jsonReady = serializeDecodedValue(decoded);
+        const jsonOutput = JSON.stringify(jsonReady, null, 2);
 
         if (outfile) {
             await writeFile(outfile, jsonOutput);

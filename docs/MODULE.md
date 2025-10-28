@@ -108,25 +108,84 @@ Resolves a manifest by processing constants, ordering addresses, and preparing i
 
 ### `decodeTransaction(txBytes, options)`
 
-Decodes a binary transaction into the canonical manifest-style JSON that the signer validated.
+Decodes a binary transaction into the canonical manifest-style structure the encoder uses. All SCTP vectors remain `Uint8Array`s so you can re-encode the decoded object without losing fidelity.
 
--   **`txBytes`** `<Uint8Array>`: The raw transaction bytes. You can load them with `await fs.readFile(path)`.
+-   **`txBytes`** `<Uint8Array>`: Raw transaction bytes (include the Lea VM header if present).
 -   **`options`** `<Object>` *(optional)*:
-    -   `stripVmHeader` `<boolean>`: Set to `true` if the buffer includes the Lea VM wrapper (`LEAB` magic + length prefix).
--   **Returns**: `<Object>` A plain object containing `pod`, `version`, `sequence`, `gasLimit`, `gasPrice`, `addresses`, `invocations`, `signatures`, and (when present) `vmHeader`.
+    -   `stripVmHeader` `<boolean>`: Set to `true` when `txBytes` is prefixed with the Lea VM wrapper (`LEAB` magic + length).
+    -   `manifest` `<Object>`: The authoring manifest. When supplied the decoder uses it to recover instruction types (e.g., `INLINE`, `$pubset(...)`) and annotate inline payloads.
+-   **Returns**: `<Object>` containing `pod`, `version`, `sequence`, `gasLimit`, `gasPrice`, `addresses`, `invocations`, `signatures`, and optional `vmHeader`. Every `Uint8Array` exposes lazy getters:
+    -   `.hex` – canonical lowercase hex.
+    -   `.bech32m` – available for address fields when the HRP is known.
+    -   `.info` – metadata describing the field (instruction kind, signer, etc.). For pubsets you’ll also find `info.keys` (with empty `sk` placeholders and decoded `pk`) and `info.keyset` shaped like `[[sk, pk], [sk, pk]]` for Ed25519 and Falcon-512 respectively.
 
-#### Example: Decoding a Transaction
+> **Shorthand:** For convenience you can pass the manifest object directly as the second argument (`decodeTransaction(txBytes, manifest)`); it’s equivalent to `decodeTransaction(txBytes, { manifest })`.
+
+#### Example: Decoding with Manifest Hints
 
 ```javascript
 import { decodeTransaction } from '@getlea/ltm';
 import { promises as fs } from 'fs';
 
-const bytes = await fs.readFile('./vm-output.tx');
-const decoded = decodeTransaction(bytes, { stripVmHeader: true });
+const txBytes = await fs.readFile('./transaction.bin');
+const manifest = JSON.parse(await fs.readFile('./manifests/minimal.json', 'utf-8'));
 
-console.log(decoded.pod); // hex string
-console.log(decoded.invocations[0].instructions);
+const decoded = decodeTransaction(txBytes, { manifest });
+
+console.log(decoded.pod.hex);                   // 'pod' as hex
+console.log(decoded.addresses[0].bech32m);      // First address as bech32m
+
+for (const instruction of decoded.invocations[0].instructions) {
+  if (instruction.INLINE) {
+    console.log(instruction.INLINE.info);       // e.g. { kind: 'pubset', signer: 'publisher' }
+  }
+}
 ```
+
+#### Decoded Object Shape
+
+```ts
+type DecodedTransaction = {
+  pod: Uint8Array;                 // raw 32-byte POD prefix
+  version: number | string;        // ULEB128, string when > Number.MAX_SAFE_INTEGER
+  sequence: number | string;
+  gasLimit: number | string;
+  gasPrice: number | string;
+  addresses: Uint8Array[];         // every entry has .hex / .bech32m / .info
+  invocations: Array<{
+    targetAddress: number;
+    instructions: Array<
+      | { uleb: number | string; comment?: string }
+      | { sleb: number | string; comment?: string }
+      | { vector: Uint8Array & ByteDecorators; comment?: string }
+      | { INLINE: Uint8Array & ByteDecorators; comment?: string }
+    >;
+  }>;
+  signatures: Array<{
+    ed25519: Uint8Array & ByteDecorators;
+    falcon512: Uint8Array & ByteDecorators;
+  }>;
+  vmHeader?: { magic: string; version: number; length: number };
+  hashes?: {
+    base(): Promise<Uint8Array>;   // blake3(pod || preSignatureSection)
+    baseHex(): Promise<string>;
+    preSignature: Uint8Array;      // raw bytes up to the first signature
+    signatureSection: Uint8Array;  // raw signature payload
+  };
+};
+
+type ByteDecorators = {
+  hex: string;
+  bech32m?: string;
+  info: Record<string, any>;
+};
+```
+
+- Addresses live in `decoded.addresses`; fetch the bytes for an invocation with `decoded.addresses[invocation.targetAddress]`.
+- For inline pubsets, `instruction.INLINE` is the original serialized MSCTP chunk, while `instruction.INLINE.info.keyset` gives you the `[[sk, pk], [sk, pk]]` structure (secret keys are zero-length stubs to avoid ever leaking private material).
+- Use `await decoded.hashes.base()` (or `baseHex()`) to recompute the Blake3 hash of the unsigned payload; combine it with `decoded.hashes.signatureSection` if you need to re-verify signatures externally.
+
+Because every vector remains a `Uint8Array`, you can feed the decoded structure back into your own encoder (or the provided helpers in `src/core`) and reproduce the original bytes exactly when needed.
 
 ### `decodeExecutionResult(resultBuffer, manifest)`
 
@@ -163,6 +222,26 @@ try {
 } catch (error) {
   console.error('[FAIL]', error.message);
 }
+```
+
+### `verifyTransactionWithKeyset(input, keyset, options)`
+
+High-level helper to validate single-signer Lea transactions produced by `createTransaction`.
+
+-   **`input`** `<Uint8Array | DecodedTransaction>`: Either the raw transaction bytes or the object returned by `decodeTransaction`.
+-   **`keyset`** `<Object | Array>`: Either the standard Lea keyset object (`{ ed25519: { pk }, falcon512: { pk } }`), a full key file (`{ keyset: [...] }`), or the inline pubset array (`[[sk, pk], [sk, pk]]`). Secret keys are ignored.
+-   **`options`** `<Object>` *(optional)*:
+    -   `stripVmHeader` `<boolean>`: Only used when `input` is bytes; set true if the transaction includes a Lea VM wrapper.
+-   **Returns**: `<Promise<{ ok: boolean, ed25519: boolean, falcon512: boolean }>>`
+
+```javascript
+import { verifyTransactionWithKeyset } from '@getlea/ltm';
+
+const decoded = decodeTransaction(txBytes, manifest);
+const keyset = decoded.invocations[0].instructions[1].INLINE.info.keyset;
+const result = await verifyTransactionWithKeyset(decoded, keyset);
+
+console.log(result.ok); // true when both signatures verify
 ```
 
 ## Contributing
