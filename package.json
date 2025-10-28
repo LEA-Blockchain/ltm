@@ -1,6 +1,6 @@
 {
   "name": "@getlea/ltm",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A library for resolving and encoding LEA Transaction Manifests.",
   "license": "MIT",
   "author": "Allwin Ketnawang",

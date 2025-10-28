@@ -7,10 +7,10 @@ description: A library for resolving and encoding LEA Transaction Manifests.
 
 # @leachain/ltm
 
-[![npm version](https://img.shields.io/npm/v/@leachain/ltm.svg)](https://www.npmjs.com/package/@leachain/ltm)
-[![License](https://img.shields.io/npm/l/@leachain/ltm.svg)](https://github.com/LEA-Blockchain/ltm/blob/main/LICENSE)
+[![npm version](https://img.shields.io/npm/v/@getlea/ltm.svg)](https://www.npmjs.com/package/@getlea/ltm)
+[![License](https://img.shields.io/npm/l/@getlea/ltm.svg)](https://github.com/LEA-Blockchain/ltm/blob/main/LICENSE)
 
-This package provides a library for resolving and encoding human-readable **Lea Transaction Manifests (LTM)** into the binary SCTP format used by the Lea network.
+This package provides a library for resolving and encoding human-readable **Lea Transaction Manifests (LTM)** into the binary SCTP format used by the Lea network, and for decoding transactions/results back into canonical JSON.
 
 ## Features
 
@@ -87,15 +87,17 @@ try {
 
 ## API Reference
 
-The `@leachain/ltm` library exports three primary functions:
+The `@leachain/ltm` library exports four primary functions:
 
-### `createTransaction(manifest, signerKeys)`
+### `createTransaction(manifest, signerKeys, options)`
 
 Creates and signs a binary transaction from a manifest object and signer keys.
 
 -   **`manifest`** `<Object>`: The LTM manifest object.
 -   **`signerKeys`** `<Object>`: Map of signer name to key object (new lea-keygen format).
--   **Returns**: `<Promise<{ tx: Uint8Array, txId: string }>>` Encoded transaction bytes and hex txId.
+-   **`options`** `<Object>` *(optional)*:
+    -   `prevTxHash` `<Uint8Array>`: Provide a 32-byte previous transaction hash to enable chaining.
+-   **Returns**: `<Promise<{ tx: Uint8Array, txId: string, linkId?: string }>>` Encoded transaction bytes, the hex `txId`, and (when chaining) the `linkId` that was actually signed.
 
 ### `resolveManifest(manifest)`
 
@@ -103,6 +105,28 @@ Resolves a manifest by processing constants, ordering addresses, and preparing i
 
 -   **`manifest`** `<Object>`: The LTM manifest object.
 -   **Returns**: `<Promise<Object>>` A promise that resolves to the resolved manifest object.
+
+### `decodeTransaction(txBytes, options)`
+
+Decodes a binary transaction into the canonical manifest-style JSON that the signer validated.
+
+-   **`txBytes`** `<Uint8Array>`: The raw transaction bytes. You can load them with `await fs.readFile(path)`.
+-   **`options`** `<Object>` *(optional)*:
+    -   `stripVmHeader` `<boolean>`: Set to `true` if the buffer includes the Lea VM wrapper (`LEAB` magic + length prefix).
+-   **Returns**: `<Object>` A plain object containing `pod`, `version`, `sequence`, `gasLimit`, `gasPrice`, `addresses`, `invocations`, `signatures`, and (when present) `vmHeader`.
+
+#### Example: Decoding a Transaction
+
+```javascript
+import { decodeTransaction } from '@leachain/ltm';
+import { promises as fs } from 'fs';
+
+const bytes = await fs.readFile('./vm-output.tx');
+const decoded = decodeTransaction(bytes, { stripVmHeader: true });
+
+console.log(decoded.pod); // hex string
+console.log(decoded.invocations[0].instructions);
+```
 
 ### `decodeExecutionResult(resultBuffer, manifest)`
 

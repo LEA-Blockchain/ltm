@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { readFile, writeFile } from 'fs/promises';
-import { createTransaction } from '../core/index.mjs';
+import { createTransaction, decodeTransaction } from '../core/index.mjs';
 import { PkmiCryptoHandler } from '../core/pkmiCryptoHandler.mjs';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -21,6 +21,10 @@ function printHelp() {
     
     verify <transaction-path> [manifest-path] Verify and decode a binary transaction file.
                                               Optionally cross-reference with a manifest.
+    decode <transaction-path> [--outfile <path>] Decode a transaction into a canonical
+                                                 manifest-style JSON representation.
+                                                 Use --strip-vm-header if the file
+                                                 includes the Lea VM wrapper.
 
     decode-result <result-path> <manifest-path> Decodes a binary execution result using a
                                                 schema from the manifest.
@@ -37,6 +41,7 @@ function printHelp() {
   Example:
     lea-ltm package ./m.json --sender ./s.json --file c ./c.wasm --outfile tx.bin
     lea-ltm verify ./tx.bin
+    lea-ltm decode ./vm-wrapped.tx.bin --strip-vm-header
     lea-ltm decode-result ./result.bin ./m.json
 `);
 }
@@ -329,6 +334,63 @@ async function decodeResult(args) {
     }
 }
 
+async function decodeTransactionCommand(args) {
+    if (args.length === 0) {
+        console.error('[ERROR] Missing transaction path for decode command.');
+        console.error('Usage: lea-ltm decode <transaction-path> [--outfile <path>] [--strip-vm-header]');
+        process.exit(1);
+    }
+
+    let outfile = null;
+    let stripVmHeader = false;
+    const positional = [];
+    for (let i = 0; i < args.length; i++) {
+        if (args[i] === '--outfile') {
+            if (i + 1 >= args.length) {
+                console.error('[ERROR] Missing value for --outfile.');
+                process.exit(1);
+            }
+            outfile = args[i + 1];
+            i++;
+        } else if (args[i] === '--strip-vm-header') {
+            stripVmHeader = true;
+        } else {
+            positional.push(args[i]);
+        }
+    }
+
+    if (positional.length === 0) {
+        console.error('[ERROR] Missing transaction path for decode command.');
+        console.error('Usage: lea-ltm decode <transaction-path> [--outfile <path>] [--strip-vm-header]');
+        process.exit(1);
+    }
+
+    const [txPath] = positional;
+
+    try {
+        console.log(`[INFO] Decoding transaction file: ${txPath}`);
+        const txBuffer = await readFile(txPath);
+        const txBytes = Uint8Array.from(txBuffer);
+
+        const decoded = decodeTransaction(txBytes, { stripVmHeader });
+        const jsonOutput = JSON.stringify(decoded, null, 2);
+
+        if (outfile) {
+            await writeFile(outfile, jsonOutput);
+            console.log(`
+[PASS] Decoded transaction written to ${outfile}`);
+        } else {
+            console.log(`
+[PASS] Decoded Transaction:`);
+            console.log(jsonOutput);
+        }
+    } catch (error) {
+        console.error(`
+[FAIL] An error occurred during transaction decoding: ${error.message}`);
+        process.exit(1);
+    }
+}
+
 async function main() {
     const args = process.argv.slice(2);
     if (args.length === 0 || args.includes('--help') || args.includes('-h')) {
@@ -348,6 +410,9 @@ async function main() {
             break;
         case 'decode-result':
             await decodeResult(commandArgs);
+            break;
+        case 'decode':
+            await decodeTransactionCommand(commandArgs);
             break;
         default:
             // Allow 'package' to be the default command

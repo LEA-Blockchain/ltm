@@ -7,8 +7,8 @@ description: A library and CLI for resolving and encoding LEA Transaction Manife
 
 # lea-ltm Command-Line Usage
 
-[![npm version](https://img.shields.io/npm/v/@leachain/ltm.svg)](https://www.npmjs.com/package/@leachain/ltm)
-[![License](https://img.shields.io/npm/l/@leachain/ltm.svg)](https://github.com/LEA-Blockchain/ltm/blob/main/LICENSE)
+[![npm version](https://img.shields.io/npm/v/@getlea/ltm.svg)](https://www.npmjs.com/package/@getlea/ltm)
+[![License](https://img.shields.io/npm/l/@getlea/ltm.svg)](https://github.com/LEA-Blockchain/ltm/blob/main/LICENSE)
 
 This guide provides detailed instructions for using the `lea-ltm` command-line tool to package, inspect, and manage Lea Transaction Manifests (LTM).
 
@@ -51,7 +51,7 @@ lea-ltm ./manifests/minimal.json --registrar ./keys/registrar.keys.json
 
 ## Command Reference
 
-The `lea-ltm` tool has two main commands: `package` and `verify`.
+The `lea-ltm` tool supports four commands: `package`, `verify`, `decode`, and `decode-result`.
 
 ---
 
@@ -146,6 +146,57 @@ lea-ltm verify ./transaction.bin
 
 ```sh
 lea-ltm verify ./deploy.bin ./manifests/deploy.json
+```
+
+---
+
+### `decode`
+
+Decodes a binary transaction into the canonical manifest-style JSON that the signer sees, optionally stripping the Lea VM header emitted by some runtimes.
+
+#### Usage
+
+```sh
+lea-ltm decode <transaction-path> [--outfile <path>] [--strip-vm-header]
+```
+
+#### Options
+
+| Option                  | Description                                                                 |
+| ----------------------- | --------------------------------------------------------------------------- |
+| `--outfile <path>`      | Write the decoded JSON to a file instead of stdout.                         |
+| `--strip-vm-header`     | Remove the Lea VM header (`LEAB` magic + length) before decoding.           |
+
+#### Examples
+
+**1. Print the canonical manifest to stdout**
+
+```sh
+lea-ltm decode ./transaction.bin
+```
+
+**2. Decode a VM-wrapped file and save the JSON**
+
+```sh
+lea-ltm decode ./vm-output.tx --strip-vm-header --outfile ./decoded.json
+```
+
+---
+
+### `decode-result`
+
+Decodes a transaction execution result using the `resultSchema` embedded in the manifest.
+
+#### Usage
+
+```sh
+lea-ltm decode-result <result-path> <manifest-path>
+```
+
+#### Example
+
+```sh
+lea-ltm decode-result ./result.bin ./manifests/deploy.json
 ```
 
 ## License

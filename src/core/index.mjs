@@ -2,6 +2,7 @@ import { PkmiCryptoHandler } from './pkmiCryptoHandler.mjs';
 import { resolveManifest } from './manifestResolver.mjs';
 import { encodePreSignaturePayload, appendSignatures } from './transactionEncoder.mjs';
 import { decodeExecutionResult } from './resultDecoder.mjs';
+import { decodeTransaction } from './transactionDecoder.mjs';
 import { createBLAKE3 } from 'hash-wasm';
 import { computeTxLinkHash } from './txLink.mjs';
 import { MsctpEncoder } from '../../msctp/msctp.js';
@@ -12,7 +13,7 @@ function toHexString(bytes) {
         .join('');
 }
 
-export { decodeExecutionResult, resolveManifest };
+export { decodeExecutionResult, resolveManifest, decodeTransaction };
 
 export async function createTransaction(manifest, signerKeys, options = {}) {
     // 1. Initialize crypto handlers for all provided signers.
