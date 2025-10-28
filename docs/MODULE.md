@@ -5,7 +5,7 @@ version: 1.0.0
 description: A library for resolving and encoding LEA Transaction Manifests.
 -->
 
-# @leachain/ltm
+# @getlea/ltm
 
 [![npm version](https://img.shields.io/npm/v/@getlea/ltm.svg)](https://www.npmjs.com/package/@getlea/ltm)
 [![License](https://img.shields.io/npm/l/@getlea/ltm.svg)](https://github.com/LEA-Blockchain/ltm/blob/main/LICENSE)
@@ -22,7 +22,7 @@ This package provides a library for resolving and encoding human-readable **Lea 
 ## Installation
 
 ```sh
-npm install @leachain/ltm
+npm install @getlea/ltm
 ```
 
 ## Key Files
@@ -44,7 +44,7 @@ Load them from disk and pass as `signerKeys = { <signerName>: keyObject }`.
 The following example demonstrates how to use the core `createTransaction` function to build a transaction programmatically.
 
 ```javascript
-import { createTransaction } from '@leachain/ltm';
+import { createTransaction } from '@getlea/ltm';
 import { promises as fs } from 'fs';
 
 // 1. Define a transaction manifest object.
@@ -87,7 +87,7 @@ try {
 
 ## API Reference
 
-The `@leachain/ltm` library exports four primary functions:
+The `@getlea/ltm` library exports four primary functions:
 
 ### `createTransaction(manifest, signerKeys, options)`
 
@@ -118,7 +118,7 @@ Decodes a binary transaction into the canonical manifest-style JSON that the sig
 #### Example: Decoding a Transaction
 
 ```javascript
-import { decodeTransaction } from '@leachain/ltm';
+import { decodeTransaction } from '@getlea/ltm';
 import { promises as fs } from 'fs';
 
 const bytes = await fs.readFile('./vm-output.tx');
@@ -139,7 +139,7 @@ Decodes a binary execution result from a transaction using the `resultSchema` de
 #### Example: Decoding a Result
 
 ```javascript
-import { decodeExecutionResult } from '@leachain/ltm';
+import { decodeExecutionResult } from '@getlea/ltm';
 import { promises as fs } from 'fs';
 
 // 1. Load the manifest that contains the 'resultSchema'.
@@ -171,4 +171,4 @@ Contributions are welcome. Please refer to the project's contribution guidelines
 
 ## License
 
-This project is licensed under the ISC License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the ISC License. See the [LICENSE](https://raw.githubusercontent.com/LEA-Blockchain/ltm/refs/heads/main/LICENSE) file for details.

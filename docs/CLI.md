@@ -201,4 +201,4 @@ lea-ltm decode-result ./result.bin ./manifests/deploy.json
 
 ## License
 
-This project is licensed under the ISC License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the ISC License. See the [LICENSE](https://raw.githubusercontent.com/LEA-Blockchain/ltm/refs/heads/main/LICENSE) file for details.

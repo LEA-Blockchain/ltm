@@ -5,10 +5,10 @@ version: 1.0.0
 description: A library and CLI for resolving and encoding LEA Transaction Manifests.
 -->
 
-# @leachain/ltm
+# @getlea/ltm
 
-[![npm version](https://img.shields.io/npm/v/@leachain/ltm.svg)](https://www.npmjs.com/package/@leachain/ltm)
-[![License](https://img.shields.io/npm/l/@leachain/ltm.svg)](https://github.com/LEA-Blockchain/ltm/blob/main/LICENSE)
+[![npm version](https://img.shields.io/npm/v/@getlea/ltm.svg)](https://www.npmjs.com/package/@getlea/ltm)
+[![License](https://img.shields.io/npm/l/@getlea/ltm.svg)](https://github.com/LEA-Blockchain/ltm/blob/main/LICENSE)
 
 This package provides a library and a command-line tool for resolving and encoding human-readable **Lea Transaction Manifests (LTM)** into the binary SCTP format used by the Lea network.
 
@@ -26,12 +26,12 @@ The LEA Transaction Manifest (LTM) introduces a declarative layer that solves th
 
 Full documentation is available for both the library and the CLI tool.
 
--   **[Node.js Module Documentation](./docs/MODULE.md)**: For developers using this package as a library in their applications.
--   **[Command-Line Tool (CLI) Documentation](./docs/CLI.md)**: For users who want to use the `lea-ltm` command-line tool.
+-   **[Node.js Module Documentation](https://lea-blockchain.github.io/ltm/MODULE.md)**: For developers using this package as a library in their applications.
+-   **[Command-Line Tool (CLI) Documentation](https://lea-blockchain.github.io/ltm/CLI.md)**: For users who want to use the `lea-ltm` command-line tool.
 
 For a detailed explanation of the JSON manifest structure, its fields, and the use of dynamic variables like `$addr()` and `$const()`, please see the official format documentation:
 
-- **[Lea Transaction Manifest Format](./docs/LTM_FORMAT.md)**
+- **[Lea Transaction Manifest Format](https://lea-blockchain.github.io/ltm/LTM_FORMAT.md)**
 
 ## Key Files
 
@@ -55,4 +55,4 @@ Pass these files to the CLI using `--<signerName> <path>` (e.g., `--registrar ex
 
 ## License
 
-This project is licensed under the ISC License. See the `LICENSE` file for details.
+This project is licensed under the ISC License. See the [LICENSE](https://github.com/LEA-Blockchain/ltm/blob/main/LICENSE) file for details.
